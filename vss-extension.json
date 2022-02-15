@@ -1,13 +1,13 @@
 {
     "manifestVersion": 1,
-    "id": "prDashboard",
+    "id": "projecthub",
     "publisher": "MHSNALM",
     "version": "2.1",
-    "name": "Project Repository Dashboard",
-    "description": "Dashboard to show stats and information about the Project Repositories.",
+    "name": "Project Hub",
+    "description": "Dashboard to show stats and information about the Project.",
     "public": false,
     "categories": [
-        "Azure Repos"
+        "Azure Overview"
     ],
     "tags": [
         "pull request",
@@ -60,12 +60,12 @@
         {
             "id": "MHSNALM",
             "type": "ms.vss-web.hub",
-            "description": "Hub to show stats and information about the Project Repositories.",
+            "description": "Hub to show stats and information about the Project.",
             "targets": [
                 "ms.vss-code-web.code-hub-group"
             ],
             "properties": {
-                "name": "Project Repository Stats",
+                "name": "Project Hub",
                 "order": 100,
                 "icon": "asset://static/barIcon.png",
                 "uri": "dist/PRInfo/context.html"

@@ -7,7 +7,7 @@
     "description": "This will give you insights in to who is approving the Pull Requests for your repository.",
     "public": false,
     "categories": [
-        "Azure Repos"
+        "Azure Overview"
     ],
     "tags": [
         "pull request",
