@@ -5,7 +5,7 @@ import { GitServiceIds, IVersionControlRepositoryService } from "azure-devops-ex
 import { Header, TitleSize } from "azure-devops-ui/Header";
 import { Page } from "azure-devops-ui/Page";
 import { GitRestClient, GitPullRequest, PullRequestStatus, GitPullRequestSearchCriteria, GitBranchStats } from "azure-devops-extension-api/Git";
-import { CommonServiceIds, getClient } from "azure-devops-extension-api";
+import { CommonServiceIds, IProjectPageService, getClient } from "azure-devops-extension-api";
 import { showRootComponent } from "../../Common";
 import { GitRepository, IdentityRefWithVote } from "azure-devops-extension-api/Git/Git";
 import {  fixedColumns,  ITableItem } from "./TableData";
@@ -33,6 +33,7 @@ interface IRepositoryServiceHubContentState {
     isToastFadingOut: boolean;
     foundCompletedPRs: boolean;
     doneLoading:boolean;
+    projectName:string;
 }
 
 
@@ -81,7 +82,7 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
         super(props);
         this.tableArrayData=this.getTableItemProvider([]);
         this.itemProvider = new ObservableArray<ITableItem | ObservableValue<ITableItem | undefined>>(this.getTableItemProvider([]).value);
-        this.state = { repository: null,   exception: "", isToastFadingOut:false, isToastVisible:false, foundCompletedPRs:true, doneLoading:false};        
+        this.state = { repository: null,   exception: "", isToastFadingOut:false, isToastVisible:false, foundCompletedPRs:true, doneLoading:false, projectName:""};        
         this.durationDisplayObject = {days:0, hours:0, minutes:0, seconds:0, milliseconds:0};
         
         this.myBarChartDims = {height:250, width:500};
@@ -132,6 +133,9 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
             const repoSvc = await SDK.getService<IVersionControlRepositoryService>(GitServiceIds.VersionControlRepositoryService);
             const wiSvc = await SDK.getService(CommonServiceIds.LocationService)
             var repository = await repoSvc.getCurrentGitRepository();
+            const projectService = await SDK.getService<IProjectPageService>(CommonServiceIds.ProjectPageService);
+            const project = await projectService.getProject();
+
             var exception = "";       
             //var count:number = -1;
             let prTableList:ITableItem[] = []
@@ -141,6 +145,11 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
             {            
                 this.setState({repository:repository});
                 //let prList:GitPullRequest[] = await this.retrievePullRequestRowsFromADO(repository.id);
+
+                if (project) {
+                    this.setState({ projectName: project.name });
+                }  
+                
                 await this.LoadData();                
                 
                 if(this.rawPRCount < 1)
@@ -153,7 +162,9 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
                 }
                 
                 
-            }           
+            }
+            
+                     
             
         }
         catch(ex)
@@ -208,7 +219,7 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
     {
         if(this.state.repository)
         {
-            let prList:GitPullRequest[] = await this.retrievePullRequestRowsFromADO(this.state.repository.id);
+            let prList:GitPullRequest[] = await this.retrievePullRequestRowsFromADO(this.state.repository.id, this.state.projectName);
             prList = prList.sort(statKeepers.ComparePRClosedDate);
             let prTableList = await this.getPullRequestRows(prList);
             this.rawPRCount =  prList.length;
@@ -306,12 +317,12 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
 
 
     ///
-    public async retrievePullRequestRowsFromADO(repositoryId:string): Promise<GitPullRequest[]>
+    public async retrievePullRequestRowsFromADO(repositoryId:string, project:string): Promise<GitPullRequest[]>
     {
         let searchCriteria: GitPullRequestSearchCriteria = {status:PullRequestStatus.Completed, includeLinks:false, creatorId: "", reviewerId: "", repositoryId: "", sourceRefName: "",targetRefName:"", sourceRepositoryId: ""};
         const client = getClient(GitRestClient);
-        let prList = client.getPullRequests(repositoryId, searchCriteria,undefined,undefined,undefined,500);
-
+        //let prList = client.getPullRequests(repositoryId, searchCriteria,undefined,undefined,undefined,500);
+        let prList = client.getPullRequestsByProject(project, searchCriteria,undefined,undefined,500);
         return prList;
     }
 
@@ -545,13 +556,13 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
             {
                 return(
                     <Page className="sample-hub flex-grow">                
-                    <Header title="Repository PR Stats" titleSize={TitleSize.Large} />
+                    <Header title="Project Hub" titleSize={TitleSize.Large} />
     
                     <ZeroData
-                    primaryText="No Completed Pull Requests found in this Repository"
+                    primaryText="No Completed Pull Requests found."
                     secondaryText={
                         <span>
-                           This report is designed to give you stats and information about the Pull Request completions in your repository, it will begin providing data as you begin completing Pull Requests in this repository
+                           This report is designed to give you stats and information about the repositories in your project.
                         </span>
                     }
                     imageAltText="Bars"
@@ -566,7 +577,7 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
                 return(
 
                     <Page className="flex-grow prinfo-hub">                
-                    <Header title="Repository PR Stats" titleSize={TitleSize.Large} />
+                    <Header title="Project Hub" titleSize={TitleSize.Large} />
 
                     
                     <div>

@@ -1,7 +1,7 @@
 {
-  "name": "PRReport",
-  "version": "0.0.14",
-  "description": "PRReport will show pull request stats",
+  "name": "prdashboard",
+  "version": "0.0.15",
+  "description": "PRDashboard will show project repository stats",
   "keywords": [
     "extensions",
     "Azure DevOps",
@@ -10,7 +10,7 @@
   "license": "GPL-3.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/jeffpriz/devops-pr-stats"
+    "url": ""
   },
   "scripts": {
     "clean": "rimraf ./dist",

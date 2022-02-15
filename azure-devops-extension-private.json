@@ -1,9 +1,9 @@
 {
     "manifestVersion": 1,
-    "id": "prApprovalReporttestversion",
-    "publisher": "OneLuckiDev",
-    "version": "1.0.137",
-    "name": "Pull Request Completion Report",
+    "id": "prApprovalDashboardtestversion",
+    "publisher": "MHSNALM",
+    "version": "2.0",
+    "name": "Pull Request Dashboard",
     "description": "This will give you insights in to who is approving the Pull Requests for your repository.",
     "public": false,
     "categories": [
