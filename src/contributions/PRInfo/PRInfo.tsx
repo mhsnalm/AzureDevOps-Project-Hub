@@ -66,6 +66,7 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
     private displayText:ObservableValue<string>;
     private rawPRCount:number= 0;
     private dateSelection:DropdownSelection;
+    private repoSelection:DropdownSelection;
     private mondayBeforeEarliestPR:Date = new Date();
     private durationSlices:statKeepers.IDurationSlice[] = [];
     private dateSelectionChoices = [
@@ -77,6 +78,11 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
         { text: "Top 500 PRs", id: this.TOP500_Selection_ID }
 
     ];
+    private repoList = [
+        { text: "All", id: "0" }
+    ];
+
+    private selectedRepositoryID:ObservableValue<string>;
 
     constructor(props: {}) {
         super(props);
@@ -91,8 +97,13 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
         
         this.dateSelection = new DropdownSelection();
         this.dateSelection.select(2);
+
+        this.repoSelection = new DropdownSelection();
+        this.repoSelection.select(0);
+        
         this.completedDate = new ObservableValue<Date>(this.getDateForSelectionIndex(2));
         this.displayText =  new ObservableValue<string>("Completed Since " + this.completedDate.value.toLocaleDateString());
+        this.selectedRepositoryID = new ObservableValue<string>("0");
 
         this.branchDictionary = new Map<string,statKeepers.INameCount>();
         this.approvalGroupDictionary = new Map<string,statKeepers.IReviewWithVote>();
@@ -140,11 +151,13 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
             //var count:number = -1;
             let prTableList:ITableItem[] = []
             let prTableArrayObj:ArrayItemProvider<ITableItem> = this.getTableItemProvider([]);
-            
+
+            let repositoryList:GitRepository[] = await this.retrieveRepositoriesFromADO(this.state.projectName);
+            repositoryList.forEach((value)=>{ this.repoList.push({text:value.name,id:value.id}) });
+
             if(repository)
             {            
                 this.setState({repository:repository});
-                //let prList:GitPullRequest[] = await this.retrievePullRequestRowsFromADO(repository.id);
 
                 if (project) {
                     this.setState({ projectName: project.name });
@@ -165,7 +178,7 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
             }
             
                      
-            
+ 
         }
         catch(ex)
         {
@@ -186,7 +199,7 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
         }
     }
 
-    private onSelect = (event: React.SyntheticEvent<HTMLElement>, item: IListBoxItem<{}>) => {
+    private onDateFilterSelect = (event: React.SyntheticEvent<HTMLElement>, item: IListBoxItem<{}>) => {
         this.completedDate.value = new Date((new Date().getTime() - (Number.parseInt(item.id) * this.dayMilliseconds)))
         if(item.id == this.TOP500_Selection_ID)
         {
@@ -198,6 +211,11 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
         }
         this.approverList.value = [];
         this.handleDateChange();
+    };
+
+    private onRepositorySelect = (event: React.SyntheticEvent<HTMLElement>, item: IListBoxItem<{}>) => {
+        this.selectedRepositoryID.value = item.id;
+        this.LoadData();
     };
 
     private GetTableDataFunctions(prList:GitPullRequest[]):ArrayItemProvider<ITableItem>
@@ -316,17 +334,28 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
     }
 
 
-    ///
+
     public async retrievePullRequestRowsFromADO(repositoryId:string, project:string): Promise<GitPullRequest[]>
     {
         let searchCriteria: GitPullRequestSearchCriteria = {status:PullRequestStatus.Completed, includeLinks:false, creatorId: "", reviewerId: "", repositoryId: "", sourceRefName: "",targetRefName:"", sourceRepositoryId: ""};
         const client = getClient(GitRestClient);
-        //let prList = client.getPullRequests(repositoryId, searchCriteria,undefined,undefined,undefined,500);
-        let prList = client.getPullRequestsByProject(project, searchCriteria,undefined,undefined,500);
+        let prList;
+
+        if(this.selectedRepositoryID.value == "0")
+            prList = client.getPullRequestsByProject(project, searchCriteria,undefined,undefined,500);
+        else
+            prList = client.getPullRequests(this.selectedRepositoryID.value, searchCriteria,undefined,undefined,undefined,500);
+        
         return prList;
     }
 
-
+    public async retrieveRepositoriesFromADO(project:string): Promise<GitRepository[]>
+    {
+        let searchCriteria: GitPullRequestSearchCriteria = {status:PullRequestStatus.Completed, includeLinks:false, creatorId: "", reviewerId: "", repositoryId: "", sourceRefName: "",targetRefName:"", sourceRepositoryId: ""};
+        const client = getClient(GitRestClient);
+        let repositoryList = client.getRepositories(project);
+        return repositoryList;
+    }
 
     ///
     public getPullRequestRows(prList:GitPullRequest[]): ITableItem[]
@@ -577,25 +606,42 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
                 return(
 
                     <Page className="flex-grow prinfo-hub">                
-                    <Header title="Project Hub" titleSize={TitleSize.Large} />
+                    <Header title="Unity Project Hub" titleSize={TitleSize.Large} />
 
                     
                     <div>
                     <div className="flex-row">
                                         <div className="flex-column"> 
                                         <span className="flex-cell">
-                                           Show Pull Requests Completed within: <span style={{minWidth:"5px"}} />
+                                           Show Project Data for : <span style={{minWidth:"5px"}} />
                                            <Dropdown
                                                     ariaLabel="Basic"                                                    
                                                     placeholder="Select an Option"
                                                     width={500}
                                                     items={this.dateSelectionChoices}
                                                     selection={this.dateSelection}
-                                                    onSelect={this.onSelect}
+                                                    onSelect={this.onDateFilterSelect}
+                                                />  
+                                            </span>
+                                            <span style={{minWidth:"20px"}} >
+                                            </span>
+                                        </div>
+
+                                        <div className="flex-column"> 
+                                        
+                                            <span className="flex-cell">
+                                            Show Data for Repository: <span style={{minWidth:"5px"}} />
+                                           <Dropdown
+                                                    ariaLabel="Basic"                                                    
+                                                    placeholder="Select an Option"
+                                                    width={500}
+                                                    items={this.repoList}
+                                                    selection={this.repoSelection}
+                                                    onSelect={this.onRepositorySelect}
+                                                    
                                                 />  
                                             </span>
                                             <span className="flex-cell">
-
                                             </span>
                                         </div>
                                     </div>
@@ -617,13 +663,13 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
                                                         <div className="flex-row"> 
                                                         <div className="flex-cell flex-grow" style={{minWidth:"350px"}}>
                                                         <Card titleProps={{ text:"Closed Pull Requests"}}>
-                                                            <div className="flex-cell" style={{minWidth:"315px"}}>
+                                                            <div className="flex-cell" style={{minWidth:"350px"}}>
                                                                 <table>
                                                                     <tr><td>
-                                                                    <div style={{minWidth:"315px"}}><Bar data={closedPRChartData} height={200}></Bar></div>    
+                                                                    <div style={{minWidth:"350px"}}><Bar data={closedPRChartData} height={200}></Bar></div>    
                                                                     </td></tr>
                                                                     <tr><td>
-                                                                    <div className="body-xs" style={{minWidth:"315px"}}>Trends for the last year (max last 500 PRs)</div>                                                                
+                                                                    <div className="body-xs" style={{minWidth:"315px"}}>Trends for the last year / max last 500 PRs</div>                                                                
                                                                     </td></tr>
                                                                 </table>
                                                             </div>
@@ -657,13 +703,13 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
                                                     <div className="flex-row">
                                                         <div className="flex-cell" style={{minWidth:"350px"}}>
                                                         <Card titleProps={{ text:"Open Time Trends (2 week interval)"}}>
-                                                            <div className="flex-cell" style={{minWidth:"315px"}}>   
+                                                            <div className="flex-cell" style={{minWidth:"350px"}}>   
                                                             <table>
                                                                     <tr><td>
-                                                                    <div className="flex-cell" style={{minWidth:"315px"}}><Bar data={durationTrenChartData} height={200}></Bar></div>   
+                                                                    <div className="flex-cell" style={{minWidth:"350px"}}><Bar data={durationTrenChartData} height={200}></Bar></div>   
                                                                     </td></tr>                                                                                                                       
                                                                     <tr><td>
-                                                                    <div className="flex-cell body-xs" style={{minWidth:"315px"}}>Trends for the last year (max last 500 PRs)</div>
+                                                                    <div className="flex-cell body-xs" style={{minWidth:"350px"}}>Trends for the last year / max last 500 PRs</div>
                                                                     </td></tr>                                                                
                                                             </table>
                                                             </div>
@@ -671,7 +717,7 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div className="flex-column" style={{minWidth:"350px"}}>
+                                                {/* <div className="flex-column" style={{minWidth:"350px"}}>
                                                     <Card className="flex-grow"  titleProps={{ text: "Target Branches" }}>
                                                     <div className="flex-row" style={{ flexWrap: "wrap" }}>
                                                         <table>
@@ -698,7 +744,7 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
                                                             </Doughnut>
                                                         </div>
                                                     </Card>
-                                                </div>
+                                                </div> */}
                                             </div>
                                             <div className="flex-row">
       
@@ -801,7 +847,7 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
         else { //else not done loading, so show spinner
             return(                      
                 <Page className="flex-grow">                    
-                        <Header title="Repository PR Stats" titleSize={TitleSize.Large} />
+                        <Header title="Unity Project Hub" titleSize={TitleSize.Large} />
                         <Card className="flex-grow flex-center bolt-table-card" contentProps={{ contentPadding: true }}>                            
                             <div className="flex-cell">
                                 <Spinner label="Loading ..." size={SpinnerSize.large} />

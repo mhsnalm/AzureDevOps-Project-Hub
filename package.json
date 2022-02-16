@@ -1,7 +1,7 @@
 {
-  "name": "prdashboard",
-  "version": "0.0.15",
-  "description": "PRDashboard will show project repository stats",
+  "name": "projecthub",
+  "version": "0.0.14",
+  "description": "projecthub will show project repository stats",
   "keywords": [
     "extensions",
     "Azure DevOps",

@@ -1,13 +1,13 @@
 {
     "manifestVersion": 1,
-    "id": "projecthub",
-    "publisher": "MHSNALM",
-    "version": "2.1",
-    "name": "Project Hub",
+    "id": "unityprojecthub",
+    "publisher": "MohsinALM",
+    "version": "2.3",
+    "name": "Unity Project Hub",
     "description": "Dashboard to show stats and information about the Project.",
     "public": false,
     "categories": [
-        "Azure Overview"
+        "Azure Repos"
     ],
     "tags": [
         "pull request",
@@ -65,7 +65,7 @@
                 "ms.vss-code-web.code-hub-group"
             ],
             "properties": {
-                "name": "Project Hub",
+                "name": "Unity Project Hub",
                 "order": 100,
                 "icon": "asset://static/barIcon.png",
                 "uri": "dist/PRInfo/context.html"
