@@ -215,7 +215,7 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
 
     private onRepositorySelect = (event: React.SyntheticEvent<HTMLElement>, item: IListBoxItem<{}>) => {
         this.selectedRepositoryID.value = item.id;
-        this.LoadData();
+        this.handleDateChange();
     };
 
     private GetTableDataFunctions(prList:GitPullRequest[]):ArrayItemProvider<ITableItem>
@@ -609,115 +609,85 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
                     <Header title="Unity Project Hub" titleSize={TitleSize.Large} />
 
                     
-                    <div>
-                    <div className="flex-row">
-                                        <div className="flex-column"> 
-                                        <span className="flex-cell">
-                                           Show Project Data for : <span style={{minWidth:"5px"}} />
-                                           <Dropdown
-                                                    ariaLabel="Basic"                                                    
-                                                    placeholder="Select an Option"
-                                                    width={500}
-                                                    items={this.dateSelectionChoices}
-                                                    selection={this.dateSelection}
-                                                    onSelect={this.onDateFilterSelect}
-                                                />  
-                                            </span>
-                                            <span style={{minWidth:"20px"}} >
-                                            </span>
-                                        </div>
+                        <div>
+                            <div className="flex-row">
+                                <div className="flex-column">
+                                    <span className="flex-cell">
+                                        Show Project Data for : <span style={{ minWidth: "5px" }} />
+                                        <Dropdown
+                                            ariaLabel="Basic"
+                                            placeholder="Select an Option"
+                                            width={500}
+                                            items={this.dateSelectionChoices}
+                                            selection={this.dateSelection}
+                                            onSelect={this.onDateFilterSelect}
+                                        />
+                                    </span>
+                                    <span style={{ minWidth: "20px" }} >
+                                    </span>
+                                </div>
 
-                                        <div className="flex-column"> 
-                                        
-                                            <span className="flex-cell">
-                                            Show Data for Repository: <span style={{minWidth:"5px"}} />
-                                           <Dropdown
-                                                    ariaLabel="Basic"                                                    
-                                                    placeholder="Select an Option"
-                                                    width={500}
-                                                    items={this.repoList}
-                                                    selection={this.repoSelection}
-                                                    onSelect={this.onRepositorySelect}
-                                                    
-                                                />  
-                                            </span>
-                                            <span className="flex-cell">
-                                            </span>
-                                        </div>
-                                    </div>
+                                <div className="flex-column">
+
+                                    <span className="flex-cell">
+                                        Show Data for Repository: <span style={{ minWidth: "5px" }} />
+                                        <Dropdown
+                                            ariaLabel="Basic"
+                                            placeholder="Select an Option"
+                                            width={500}
+                                            items={this.repoList}
+                                            selection={this.repoSelection}
+                                            onSelect={this.onRepositorySelect}
+
+                                        />
+                                    </span>
+                                    <span className="flex-cell">
+                                    </span>
+                                </div>
+                            </div>
+                            <div className="flex-row">
+                                <br></br>
+                            </div>
+                            <div className="flex-row">
+                                <div className="flex-column" style={{ minWidth: "350px" }}>
                                     <div className="flex-row">
-                                        <br></br>
-                                    </div>
-                                            <div className="flex-row">
-                                                    <div className="flex-column" style={{minWidth:"350px"}}>
-                                                        <div className="flex-row">
-                                                        <Card titleProps={{text: this.displayText.value}} >          
-                                                        <div className="flex-cell" style={{ flexWrap: "wrap", minWidth:"350px"}}>                                
-                                                                <div className="flex-column" style={{ minWidth: "310px" }} key={1}>                                              
-                                                                    <div className="body-m secondary-text flex-center" style={{ minWidth: "350px", textAlign:"center" }}>Count</div>
-                                                                    <div className="title-m flex-center" style={{ minWidth: "350px", textAlign:"center" }}>{this.PRCount}</div>  
-                                                                </div>
-                                                        </div>                                                      
-                                                        </Card>
-                                                        </div>
-                                                        <div className="flex-row"> 
-                                                        <div className="flex-cell flex-grow" style={{minWidth:"350px"}}>
-                                                        <Card titleProps={{ text:"Closed Pull Requests"}}>
-                                                            <div className="flex-cell" style={{minWidth:"350px"}}>
-                                                                <table>
-                                                                    <tr><td>
-                                                                    <div style={{minWidth:"350px"}}><Bar data={closedPRChartData} height={200}></Bar></div>    
-                                                                    </td></tr>
-                                                                    <tr><td>
-                                                                    <div className="body-xs" style={{minWidth:"315px"}}>Trends for the last year / max last 500 PRs</div>                                                                
-                                                                    </td></tr>
-                                                                </table>
-                                                            </div>
-                                                        </Card>
-                                                        </div>
-                                                    </div>
-                                                    </div>
-                                                    <div className="flex-column" style={{minWidth:"350px"}}>
-                                                    <div className="flex-row">
-                                                    <Card titleProps={{text: "Average Time Pull Requests are Open"}}>
-                                                        <div className="flex-cell" style={{ flexWrap: "wrap", textAlign:"center", minWidth:"350px"}}>
-                                                                <div className="flex-column" style={{ minWidth: "70px" }} key={1}>
-                                                                    <div className="body-m secondary-text">Days</div>
-                                                                    <div className="title-m primary-text flex-center">{this.durationDisplayObject.days.toString()}</div>
-                                                                </div>
-                                                                <div className="flex-column" style={{ minWidth: "70px" }} key={2}>
-                                                                    <div className="body-m secondary-text">Hours</div>
-                                                                    <div className="title-m primary-text flex-center">{this.durationDisplayObject.hours.toString()}</div>
-                                                                </div>
-                                                                <div className="flex-column" style={{ minWidth: "70px" }} key={3}>
-                                                                    <div className="body-m secondary-text">Minutes</div>
-                                                                    <div className="title-m primary-text flex-center">{this.durationDisplayObject.minutes.toString()}</div>
-                                                                </div>
-                                                                <div className="flex-column" style={{ minWidth: "70px" }} key={4}>
-                                                                    <div className="body-m secondary-text">Seconds</div>
-                                                                    <div className="title-m primary-text flex-center">{this.durationDisplayObject.seconds.toString()}</div>
-                                                                </div>
-                                                        </div>
-                                                    </Card>
-                                                    </div>
-                                                    <div className="flex-row">
-                                                        <div className="flex-cell" style={{minWidth:"350px"}}>
-                                                        <Card titleProps={{ text:"Open Time Trends (2 week interval)"}}>
-                                                            <div className="flex-cell" style={{minWidth:"350px"}}>   
-                                                            <table>
-                                                                    <tr><td>
-                                                                    <div className="flex-cell" style={{minWidth:"350px"}}><Bar data={durationTrenChartData} height={200}></Bar></div>   
-                                                                    </td></tr>                                                                                                                       
-                                                                    <tr><td>
-                                                                    <div className="flex-cell body-xs" style={{minWidth:"350px"}}>Trends for the last year / max last 500 PRs</div>
-                                                                    </td></tr>                                                                
-                                                            </table>
-                                                            </div>
-                                                        </Card>
-                                                        </div>
-                                                    </div>
+                                        <Card titleProps={{ text: this.displayText.value }} >
+                                            <div className="flex-cell" style={{ flexWrap: "wrap", minWidth: "350px" }}>
+                                                <div className="flex-column" style={{ minWidth: "310px" }} key={1}>
+                                                    <div className="body-m secondary-text flex-center" style={{ minWidth: "350px", textAlign: "center" }}>Count</div>
+                                                    <div className="title-m flex-center" style={{ minWidth: "350px", textAlign: "center" }}>{this.PRCount}</div>
                                                 </div>
-                                                {/* <div className="flex-column" style={{minWidth:"350px"}}>
+                                            </div>
+                                        </Card>
+                                    </div>
+                                    
+                                </div>
+                                <div className="flex-column" style={{ minWidth: "350px" }}>
+                                    <div className="flex-row">
+                                        <Card titleProps={{ text: "Average Time Pull Requests are Open" }}>
+                                            <div className="flex-cell" style={{ flexWrap: "wrap", textAlign: "center", minWidth: "350px" }}>
+                                                <div className="flex-column" style={{ minWidth: "70px" }} key={1}>
+                                                    <div className="body-m secondary-text">Days</div>
+                                                    <div className="title-m primary-text flex-center">{this.durationDisplayObject.days.toString()}</div>
+                                                </div>
+                                                <div className="flex-column" style={{ minWidth: "70px" }} key={2}>
+                                                    <div className="body-m secondary-text">Hours</div>
+                                                    <div className="title-m primary-text flex-center">{this.durationDisplayObject.hours.toString()}</div>
+                                                </div>
+                                                <div className="flex-column" style={{ minWidth: "70px" }} key={3}>
+                                                    <div className="body-m secondary-text">Minutes</div>
+                                                    <div className="title-m primary-text flex-center">{this.durationDisplayObject.minutes.toString()}</div>
+                                                </div>
+                                                <div className="flex-column" style={{ minWidth: "70px" }} key={4}>
+                                                    <div className="body-m secondary-text">Seconds</div>
+                                                    <div className="title-m primary-text flex-center">{this.durationDisplayObject.seconds.toString()}</div>
+                                                </div>
+                                            </div>
+                                        </Card>
+                                    </div>
+                                    
+                                </div>
+                                {/* <div className="flex-column" style={{minWidth:"350px"}}>
                                                     <Card className="flex-grow"  titleProps={{ text: "Target Branches" }}>
                                                     <div className="flex-row" style={{ flexWrap: "wrap" }}>
                                                         <table>
@@ -745,91 +715,125 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
                                                         </div>
                                                     </Card>
                                                 </div> */}
-                                            </div>
-                                            <div className="flex-row">
-      
-                                            </div>
-                                            <div className="flex-row">
-                                                <div className="flex-column" style={{minWidth:"350px"}}>
-                                                    <Card className="flex-grow" titleProps={{ text: "PR Code Reviewers" }}>
-                                                        <div className="flex-row" style={{ flexWrap: "wrap" }}>             
-                                                        <table>                   
-                                                            <thead>
-                                                                <td></td>
-                                                                <td style={{alignContent:"center", textAlign:"center", minWidth:"60px"}}>Count</td>
-                                                                <td style={{alignContent:"center", textAlign:"center", minWidth:"100px"}}>Percent of PRs</td>
+                            </div>
 
-                                                            </thead>
-                                                            <Observer selectedItem={this.approverList}>
-                                                                {(props: { selectedItem: statKeepers.IReviewWithVote[] }) => {
-                                                                    return ( 
-                                                                        <>
-                                                                            {props.selectedItem.map((items, index) => (
-                                                                            <tr>
-                                                                                <td className="body-m secondary-text flex-center">{items.name}</td>
-                                                                                <td className="body-m primary-text flex-center" style={{alignContent:"center", textAlign:"center", minWidth:"60px"}}>{items.value}</td>
-                                                                                <td style={{alignContent:"center", textAlign:"center", minWidth:"100px"}}>{(items.value / this.PRCount * 100).toFixed(2)}%</td>
-                                                                            </tr>
-                                                                        ))}
-                                                                        </>
-                                                                    )}
-                                                                }
-                                                            </Observer>
-                                                        </table>
-                                                        </div>                                
-                                                    </Card>
-                                                </div>
-                                                <div className="flex-column" style={{minWidth:"500px"}}>
-                                                    <Card className="flex-grow">
-                                                    <div className="flex-row flex-grow flex-cell" style={{minWidth:"500px",height:"220"}}>
-                                                        <Doughnut  data={reviewerPieChartData} height={220}></Doughnut>
-                                                    </div>
-                                                    </Card>
-                                                </div>
-                                                <div className="flex-column">
-                                                    <Card>
-                                                        <div className="flex-row" style={{minWidth:400, height:"300"}}>                                    
-                                                            <Bar data={reviewerBarChartData} options={stackedChartOptions} height={300}></Bar>                                    
-                                                        </div>
-                                                    </Card>
-                                                </div>
-                                            </div>
+                            <div className="flex-row">
+                                <div className="flex-column" style={{ minWidth: "350px" }}>
+                                    <Card className="flex-grow" titleProps={{ text: "PR Code Reviewers" }}>
+                                        <div className="flex-row" style={{ flexWrap: "wrap" }}>
+                                            <table>
+                                                <thead>
+                                                    <td></td>
+                                                    <td style={{ alignContent: "center", textAlign: "center", minWidth: "60px" }}>Count</td>
+                                                    <td style={{ alignContent: "center", textAlign: "center", minWidth: "100px" }}>Percent of PRs</td>
 
-                                            <div className="flex-row">
-                                            <div className="flex-column" style={{minWidth:"350px"}}>
-                                                    <Card className="flex-grow" titleProps={{ text: "Approval by Team/Groups" }}>
-                                                        <div className="flex-row" style={{ flexWrap: "wrap" }}>             
-                                                        <table>                   
-                                                            <thead>
-                                                                <td></td>
-                                                                <td style={{alignContent:"center", textAlign:"center", minWidth:"60px"}}>Count</td>
-                                                                <td style={{alignContent:"center", textAlign:"center", minWidth:"100px"}}>Percent of PRs</td>
+                                                </thead>
+                                                <Observer selectedItem={this.approverList}>
+                                                    {(props: { selectedItem: statKeepers.IReviewWithVote[] }) => {
+                                                        return (
+                                                            <>
+                                                                {props.selectedItem.map((items, index) => (
+                                                                    <tr>
+                                                                        <td className="body-m secondary-text flex-center">{items.name}</td>
+                                                                        <td className="body-m primary-text flex-center" style={{ alignContent: "center", textAlign: "center", minWidth: "60px" }}>{items.value}</td>
+                                                                        <td style={{ alignContent: "center", textAlign: "center", minWidth: "100px" }}>{(items.value / this.PRCount * 100).toFixed(2)}%</td>
+                                                                    </tr>
+                                                                ))}
+                                                            </>
+                                                        )
+                                                    }
+                                                    }
+                                                </Observer>
+                                            </table>
+                                        </div>
+                                    </Card>
+                                </div>
+                                <div className="flex-column" style={{ minWidth: "500px" }}>
+                                    <Card className="flex-grow">
+                                        <div className="flex-row flex-grow flex-cell" style={{ minWidth: "500px", height: "220" }}>
+                                            <Doughnut data={reviewerPieChartData} height={220}></Doughnut>
+                                        </div>
+                                    </Card>
+                                </div>
+                                <div className="flex-column">
+                                    <Card>
+                                        <div className="flex-row" style={{ minWidth: 400, height: "300" }}>
+                                            <Bar data={reviewerBarChartData} options={stackedChartOptions} height={300}></Bar>
+                                        </div>
+                                    </Card>
+                                </div>
+                            </div>
 
-                                                            </thead>
-                                                        {this.approvalGroupList.map((items, index) => (
-                                                            <tr>
-                                                                <td className="body-m secondary-text flex-center">{items.name}</td>
-                                                                <td className="body-m primary-text flex-center" style={{alignContent:"center", textAlign:"center", minWidth:"60px"}}>{items.value}</td>
-                                                                <td style={{alignContent:"center", textAlign:"center", minWidth:"100px"}}>{(items.value / this.PRCount * 100).toFixed(2)}%</td>
+                            <div className="flex-row">
+                                <div className="flex-column" style={{ minWidth: "350px" }}>
+                                    <div className="flex-cell flex-grow" style={{ minWidth: "350px" }}>
+                                        <Card titleProps={{ text: "Closed Pull Requests" }}>
+                                            <div className="flex-cell" style={{ minWidth: "350px" }}>
+                                                <table>
+                                                    <tr><td>
+                                                        <div style={{ minWidth: "350px" }}><Bar data={closedPRChartData} height={200}></Bar></div>
+                                                    </td></tr>
+                                                    <tr><td>
+                                                        <div className="body-xs" style={{ minWidth: "315px" }}>Trends for the last year / max last 500 PRs</div>
+                                                    </td></tr>
+                                                </table>
+                                            </div>
+                                        </Card>
+                                    </div>
+                                </div>
+                                <div className="flex-column" style={{ minWidth: "350px" }}>
+                                    <div className="flex-cell" style={{ minWidth: "350px" }}>
+                                        <Card titleProps={{ text: "Open Time Trends (2 week interval)" }}>
+                                            <div className="flex-cell" style={{ minWidth: "350px" }}>
+                                                <table>
+                                                    <tr><td>
+                                                        <div className="flex-cell" style={{ minWidth: "350px" }}><Bar data={durationTrenChartData} height={200}></Bar></div>
+                                                    </td></tr>
+                                                    <tr><td>
+                                                        <div className="flex-cell body-xs" style={{ minWidth: "350px" }}>Trends for the last year / max last 500 PRs</div>
+                                                    </td></tr>
+                                                </table>
+                                            </div>
+                                        </Card>
+                                    </div>
+                                </div>
+                            </div>
 
-                                                            </tr>                                    
-                                                        ))}
-                                                        </table>
-                                                        </div>                                
-                                                    </Card>
-                                                    
-                                                </div>
-                                                <Card>
-                                                    <div className="flex-row" style={{minWidth:this.myBarChartDims.width, height:"200"}}>
-                                                        <>
-                                                            <Bar data={groupBarChartData} options={stackedChartOptions} height={200}></Bar>
-                                                        </>
-                                                    </div>
-                                                </Card>
-                                                
-                                            </div>
-                                            
-                                            </div>
+                            <div className="flex-row">
+                                <div className="flex-column" style={{ minWidth: "350px" }}>
+                                    <Card className="flex-grow" titleProps={{ text: "Approval by Team/Groups" }}>
+                                        <div className="flex-row" style={{ flexWrap: "wrap" }}>
+                                            <table>
+                                                <thead>
+                                                    <td></td>
+                                                    <td style={{ alignContent: "center", textAlign: "center", minWidth: "60px" }}>Count</td>
+                                                    <td style={{ alignContent: "center", textAlign: "center", minWidth: "100px" }}>Percent of PRs</td>
+
+                                                </thead>
+                                                {this.approvalGroupList.map((items, index) => (
+                                                    <tr>
+                                                        <td className="body-m secondary-text flex-center">{items.name}</td>
+                                                        <td className="body-m primary-text flex-center" style={{ alignContent: "center", textAlign: "center", minWidth: "60px" }}>{items.value}</td>
+                                                        <td style={{ alignContent: "center", textAlign: "center", minWidth: "100px" }}>{(items.value / this.PRCount * 100).toFixed(2)}%</td>
+
+                                                    </tr>
+                                                ))}
+                                            </table>
+                                        </div>
+                                    </Card>
+
+                                </div>
+                                <Card>
+                                    <div className="flex-row" style={{ minWidth: this.myBarChartDims.width, height: "200" }}>
+                                        <>
+                                            <Bar data={groupBarChartData} options={stackedChartOptions} height={200}></Bar>
+                                        </>
+                                    </div>
+                                </Card>
+
+                            </div>
+
+                        </div>
 
                     {isToastVisible && (
                     <Toast
