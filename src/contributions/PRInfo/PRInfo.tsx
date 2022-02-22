@@ -75,9 +75,10 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
         { text: "Last 30 Days", id: "30" },
         { text: "Last 60 Days", id: "60" },
         { text: "Last 90 Days", id: "90" },
-        { text: "Top 500 PRs", id: this.TOP500_Selection_ID }
+        { text: "Last 500 PRs", id: this.TOP500_Selection_ID }
 
     ];
+    private selectedDateChoice:string ="30";
     private repoList = [
         { text: "All", id: "0" }
     ];
@@ -102,7 +103,7 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
         this.repoSelection.select(0);
         
         this.completedDate = new ObservableValue<Date>(this.getDateForSelectionIndex(2));
-        this.displayText =  new ObservableValue<string>("Completed Since " + this.completedDate.value.toLocaleDateString());
+        this.displayText =  new ObservableValue<string>("Completed Since: " + this.completedDate.value.toLocaleDateString() + " " + this.completedDate.value.toLocaleTimeString());
         this.selectedRepositoryID = new ObservableValue<string>("0");
 
         this.branchDictionary = new Map<string,statKeepers.INameCount>();
@@ -110,8 +111,29 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
         this.approverDictionary = new Map<string, statKeepers.IReviewWithVote>();
         this.approverList = new ObservableValue<statKeepers.IReviewWithVote[]>([]);
         this.initCollectionValues()
+
+        let timerId = setInterval(() => this.initRefreshTimer(), 60000);
         
     }
+
+    private initRefreshTimer()
+    {
+        if(this.state.repository)
+        {           
+            this.completedDate.value = new Date((new Date().getTime() - (Number.parseInt(this.selectedDateChoice) * this.dayMilliseconds)))
+            if(this.selectedDateChoice == this.TOP500_Selection_ID)
+            {
+                this.displayText.value = "Last 500";
+            }
+            else
+            {
+                this.displayText.value =  "Completed Since: " + this.completedDate.value.toLocaleDateString() + " " + this.completedDate.value.toLocaleTimeString();
+            }
+            this.approverList.value = [];
+            this.handleDateChange();
+        }
+    }
+    
     private initCollectionValues()
     {
         this.totalDuration = 0;
@@ -200,6 +222,7 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
     }
 
     private onDateFilterSelect = (event: React.SyntheticEvent<HTMLElement>, item: IListBoxItem<{}>) => {
+        this.selectedDateChoice = item.id;
         this.completedDate.value = new Date((new Date().getTime() - (Number.parseInt(item.id) * this.dayMilliseconds)))
         if(item.id == this.TOP500_Selection_ID)
         {
@@ -207,7 +230,7 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
         }
         else
         {
-            this.displayText.value =  "Completed Since " + this.completedDate.value.toLocaleDateString();
+            this.displayText.value =  "Completed Since: " + this.completedDate.value.toLocaleDateString() + " " + this.completedDate.value.toLocaleTimeString();
         }
         this.approverList.value = [];
         this.handleDateChange();
@@ -585,7 +608,7 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
             {
                 return(
                     <Page className="sample-hub flex-grow">                
-                    <Header title="Project Hub" titleSize={TitleSize.Large} />
+                    <Header title="Unity Project Hub" titleSize={TitleSize.Large} />
     
                     <ZeroData
                     primaryText="No Completed Pull Requests found."
@@ -613,7 +636,7 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
                             <div className="flex-row">
                                 <div className="flex-column">
                                     <span className="flex-cell">
-                                        Show Project Data for : <span style={{ minWidth: "5px" }} />
+                                    <span style={{ minWidth: "20px" }} /> Show Project Data for : <span style={{ minWidth: "5px" }} />
                                         <Dropdown
                                             ariaLabel="Basic"
                                             placeholder="Select an Option"
@@ -630,7 +653,7 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
                                 <div className="flex-column">
 
                                     <span className="flex-cell">
-                                        Show Data for Repository: <span style={{ minWidth: "5px" }} />
+                                    <span style={{ minWidth: "20px" }} /> Show Data for Repository : <span style={{ minWidth: "5px" }} />
                                         <Dropdown
                                             ariaLabel="Basic"
                                             placeholder="Select an Option"
@@ -643,7 +666,7 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
                                     </span>
                                     <span className="flex-cell">
                                     </span>
-                                </div>
+                                </div>                                
                             </div>
                             <div className="flex-row">
                                 <br></br>

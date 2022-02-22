@@ -2,7 +2,7 @@
     "manifestVersion": 1,
     "id": "unityprojecthub",
     "publisher": "MohsinALM",
-    "version": "2.5",
+    "version": "3.0",
     "name": "Unity Project Hub",
     "description": "Dashboard to show stats and information about the Project.",
     "public": false,
