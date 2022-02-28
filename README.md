@@ -1,20 +1,13 @@
-# Azure DevOps Project Repositories Statistics
+# Azure DevOps Project Hub
 
-[![Build Status](https://oneluckidev.visualstudio.com/OneLuckiDev/_apis/build/status/jeffpriz.devops-pr-stats?branchName=main)](https://oneluckidev.visualstudio.com/OneLuckiDev/_build/latest?definitionId=34&branchName=main)
+# Requisites
+1. npm
+2. python 2.x
+3. node.js
+4. Azure DevOps Web Extensions SDK
+5. TFX
 
-This Extension to Azure DevOps will give you a new Hub in your repositories section that is aimed at providing some statistical insights. This will show you things like the average time a PR is open.  It will show you what branches are getting pull requests created for.  It will show you who is approving the Pull Requests, and what their voting trends are.  It will also show you what Groups have been assigned as reviewers of the Pull Requests are, and show you their voting history on the Pull Requests for your repository.
-
-
-
-## Images
-![json text](images/repoHub.PNG)
-
-
-## Source
-[GitHub](https://github.com/jeffpriz/devops-pr-stats)
-
-## Issues
-[File an issue](https://github.com/jeffpriz/devops-pr-stats/issues)
-
-## Credits
-[Jeff Przylucki](http://www.oneluckidev.com)
+# Package and Publish
+1. npm install -g tfx-cli
+2. npm run build
+3. npx tfx-cli extension create
