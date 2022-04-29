@@ -18,6 +18,12 @@ export interface INameCount
     value:number
 }
 
+export interface ICodePushes
+{
+    name:string,
+    value:number
+}
+
 export interface IReviewWithVote
 {
     name:string,
@@ -46,6 +52,12 @@ export function CompareINameCountByValue(n1:INameCount, n2:INameCount)
 }
 
 export function CompareReviewWithVoteByValue(r1: IReviewWithVote, r2: IReviewWithVote) {  
+    if (r1.value > r2.value) { return -1; }  
+    if (r1.value < r2.value) {return 1; }  
+    return 0;  
+} 
+
+export function CompareCodePushCountByValue(r1: ICodePushes, r2: ICodePushes) {  
     if (r1.value > r2.value) { return -1; }  
     if (r1.value < r2.value) {return 1; }  
     return 0;  

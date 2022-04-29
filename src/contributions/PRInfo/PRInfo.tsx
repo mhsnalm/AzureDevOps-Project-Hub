@@ -7,7 +7,7 @@ import { Page } from "azure-devops-ui/Page";
 import { GitRestClient, GitPullRequest, PullRequestStatus, GitPullRequestSearchCriteria, GitBranchStats } from "azure-devops-extension-api/Git";
 import { CommonServiceIds, IProjectPageService, getClient } from "azure-devops-extension-api";
 import { showRootComponent } from "../../Common";
-import { GitRepository, IdentityRefWithVote } from "azure-devops-extension-api/Git/Git";
+import { GitCommitRef, GitHistoryMode, GitPush, GitPushSearchCriteria, GitQueryCommitsCriteria, GitRepository, GitVersionDescriptor, GitVersionOptions, GitVersionType, IdentityRefWithVote } from "azure-devops-extension-api/Git/Git";
 import {  fixedColumns,  ITableItem } from "./TableData";
 import { getPieChartInfo, getStackedBarChartInfo, stackedChartOptions,BarChartSize, getDurationBarChartInfo,getPullRequestsCompletedChartInfo } from "./ChartingInfo";
 import { ArrayItemProvider } from "azure-devops-ui/Utilities/Provider";
@@ -55,10 +55,16 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
 
     private approvalGroupList: statKeepers.IReviewWithVote[] =[];
     private approvalGroupDictionary: Map<string, statKeepers.IReviewWithVote>;
+
+    private codePushList:ObservableValue<statKeepers.ICodePushes[]>;
+    private codePushDictionary:Map<string, statKeepers.ICodePushes>;
+
+
     public readonly noReviewerText:string ="No Reviewer";
 
     public myBarChartDims:BarChartSize;
     public PRCount:number = 0;
+    public codePushCount:number =0;
     //private completedDate:Date;
     private readonly TOP500_Selection_ID = "3650";
     private readonly dayMilliseconds:number = ( 24 * 60 * 60 * 1000);
@@ -78,7 +84,7 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
         { text: "Last 500 PRs", id: this.TOP500_Selection_ID }
 
     ];
-    private selectedDateChoice:string ="30";
+    private selectedDateChoice:string ="14";
     private repoList = [
         { text: "All", id: "0" }
     ];
@@ -97,12 +103,12 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
 
         
         this.dateSelection = new DropdownSelection();
-        this.dateSelection.select(2);
+        this.dateSelection.select(1);
 
         this.repoSelection = new DropdownSelection();
         this.repoSelection.select(0);
         
-        this.completedDate = new ObservableValue<Date>(this.getDateForSelectionIndex(2));
+        this.completedDate = new ObservableValue<Date>(this.getDateForSelectionIndex(1));
         this.displayText =  new ObservableValue<string>("Completed Since: " + this.completedDate.value.toLocaleDateString() + " " + this.completedDate.value.toLocaleTimeString());
         this.selectedRepositoryID = new ObservableValue<string>("0");
 
@@ -110,9 +116,13 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
         this.approvalGroupDictionary = new Map<string,statKeepers.IReviewWithVote>();
         this.approverDictionary = new Map<string, statKeepers.IReviewWithVote>();
         this.approverList = new ObservableValue<statKeepers.IReviewWithVote[]>([]);
+
+        this.codePushList = new ObservableValue<statKeepers.ICodePushes[]>([]);
+        this.codePushDictionary = new Map<string, statKeepers.ICodePushes>(); 
+
         this.initCollectionValues()
 
-        let timerId = setInterval(() => this.initRefreshTimer(), 60000);
+        let timerId = setInterval(() => this.initRefreshTimer(), 900000);
         
     }
 
@@ -130,6 +140,7 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
                 this.displayText.value =  "Completed Since: " + this.completedDate.value.toLocaleDateString() + " " + this.completedDate.value.toLocaleTimeString();
             }
             this.approverList.value = [];
+            this.codePushList.value = [];
             this.handleDateChange();
         }
     }
@@ -138,13 +149,16 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
     {
         this.totalDuration = 0;
         this.PRCount = 0;
+        this.codePushCount =0;
         this.approvalGroupDictionary.clear();
         this.approverDictionary.clear();
         this.branchDictionary.clear();
         this.approverDictionary.set(this.noReviewerText, {name:this.noReviewerText,value:0, notVote:0, voteApprove:0, voteReject:0, voteWait:0});
         this.approverList.value = [];
         this.targetBranches= [];
-        this.approvalGroupList= [];        
+        this.approvalGroupList= []; 
+        this.codePushList.value = [];
+        this.codePushDictionary.clear();       
     }
 
 
@@ -211,15 +225,15 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
 
     }
 
-    public async GetGitAPIClient(repositoryID:string)
-    {
-        if(repositoryID)
-        {            
-            let searchCriteria: GitPullRequestSearchCriteria = {status:PullRequestStatus.Completed, includeLinks:true, creatorId:"", reviewerId: "", repositoryId: repositoryID, sourceRefName: "",targetRefName:"", sourceRepositoryId: repositoryID};
-            let prList: GitPullRequest[] = await API.getClient(GitRestClient).getPullRequests(repositoryID, searchCriteria);
+    // public async GetGitAPIClient(repositoryID:string)
+    // {
+    //     if(repositoryID)
+    //     {            
+    //         let searchCriteria: GitPullRequestSearchCriteria = {status:PullRequestStatus.Completed, includeLinks:true, creatorId:"", reviewerId: "", repositoryId: repositoryID, sourceRefName: "",targetRefName:"", sourceRepositoryId: repositoryID};
+    //         let prList: GitPullRequest[] = await API.getClient(GitRestClient).getPushes("name",)
 
-        }
-    }
+    //     }
+    // }
 
     private onDateFilterSelect = (event: React.SyntheticEvent<HTMLElement>, item: IListBoxItem<{}>) => {
         this.selectedDateChoice = item.id;
@@ -265,10 +279,45 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
             let prTableList = await this.getPullRequestRows(prList);
             this.rawPRCount =  prList.length;
             this.GetTableDataFunctions(prList);
+            
+            // codepush data
+            ///////////////////
+            // clean values     
+            this.codePushList.value = [];
+            this.codePushDictionary.clear();
+
+            if(this.selectedRepositoryID.value == "0")
+            {
+                for(var val of this.repoList)
+                {
+                    if(val.id != "0")
+                    {
+                        // console.log("Processing Repo: " + val.text);
+    
+                        let tempList = await this.retrieveRepositoryPushes(val.text, this.state.projectName);
+                        let pushListTable = await this.getCodePushIntoDictionary(tempList);
+    
+                        // console.log("Processed and Merged Repo: " + val.text);
+                    }
+                }
+            }
+            else
+            {
+                // console.log("Processing single Repo: " + this.selectedRepositoryID.value);
+
+                let pushList:GitPush[] = await this.retrieveRepositoryPushes(this.selectedRepositoryID.value, this.state.projectName);
+                let pushListTable = await this.getCodePushIntoDictionary(pushList);
+
+                // console.log("Processed and Merged single Repo: " + this.selectedRepositoryID.value);
+            }
+
             this.AssembleData();
+
             //this.mondayBeforeEarliestPR = statKeepers.getMondayBeforeEarliestPR(prList);
             this.mondayBeforeEarliestPR = statKeepers.getMondayBeforeEarliestPR(prList);
             this.durationSlices = statKeepers.getPRDurationSlices(prList);
+
+
         }
         else
         {
@@ -292,6 +341,8 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
         try
         {
             let tempapproverList:statKeepers.IReviewWithVote[] = [];
+            let tempCodePushList:statKeepers.ICodePushes[] = [];
+
             let averageOpenTime =0;
             if(this.PRCount > 0)
             {
@@ -328,6 +379,13 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
             this.targetBranches = this.targetBranches.sort(statKeepers.CompareINameCountByValue);
 
             this.durationDisplayObject = statKeepers.getMillisecondsToTime(averageOpenTime);
+
+            // code push data
+            this.codePushDictionary.forEach((value)=>{                
+                    tempCodePushList.push(value);
+            })
+
+            this.codePushList.value = tempCodePushList.sort(statKeepers.CompareCodePushCountByValue);
         }
         catch(ex)
         {
@@ -365,10 +423,14 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
         let prList;
 
         if(this.selectedRepositoryID.value == "0")
+        {
             prList = client.getPullRequestsByProject(project, searchCriteria,undefined,undefined,500);
+        }
         else
+        {
             prList = client.getPullRequests(this.selectedRepositoryID.value, searchCriteria,undefined,undefined,undefined,500);
-        
+        }
+
         return prList;
     }
 
@@ -380,7 +442,79 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
         return repositoryList;
     }
 
-    ///
+    // Get git pushes
+    public async retrieveRepositoryPushes(repositoryId:string, project:string): Promise<GitPush[]>
+    {
+        let searchCriteria: GitPushSearchCriteria = {
+            fromDate: this.completedDate.value,
+            includeLinks: false,
+            includeRefUpdates: false,
+            pusherId: "",
+            refName: "",
+            toDate: new Date()
+        }
+
+        const client = getClient(GitRestClient);
+        let pushList;
+
+        // console.log("Process Repo: " + repositoryId);
+
+        pushList = client.getPushes(repositoryId, project,undefined,500,searchCriteria);
+
+        // console.log("Processed Repo: " + repositoryId);
+
+        return pushList;
+    }
+
+    
+    public getCodePushIntoDictionary(pushList:GitPush[])
+    {
+        try
+        {
+            if(pushList)
+            {   
+                pushList.forEach((value)=>{
+                    if(1)
+                    {
+                        let displayName = value.pushedBy.displayName;
+                        if(displayName != "Microsoft.VisualStudio.Services.TFS")
+                        {
+                            let thisref = this.codePushDictionary.get(displayName);
+                            if(thisref)
+                            {
+                                thisref.value = thisref.value +1;                
+                            }
+                            else
+                            {
+                                this.codePushDictionary.set(displayName, {name:displayName,value:1});
+                            }
+                            
+                            this.codePushCount +=1;
+                        }
+                        if(!this.state.foundCompletedPRs)
+                        {
+                            this.setState({foundCompletedPRs:true, repository:this.state.repository, isToastFadingOut:false, isToastVisible:false, exception:"", doneLoading:true});
+                        }
+
+                        if(!this.state.doneLoading){
+                            this.setState({doneLoading:true});
+                        }
+                        
+                    }
+                });
+            }
+            else
+            {
+                this.setState({doneLoading:true});
+            }
+        }
+        catch(ex)
+        {
+            let exception = "getCodePushIntoDictionary: Error Retrieving Code Pushes -- " + ex.toString();
+            this.toastError("Getting Rows: " + exception);
+        }
+    }
+
     public getPullRequestRows(prList:GitPullRequest[]): ITableItem[]
     {
        
@@ -629,13 +763,14 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
                 return(
 
                     <Page className="flex-grow prinfo-hub">                
-                    <Header title="Unity Project Hub" titleSize={TitleSize.Large} />
+                    {/* <Header title="Unity Project Hub" titleSize={TitleSize.Large} /> */}
 
                     
                         <div>
                             <div className="flex-row">
                                 <div className="flex-column">
                                     <span className="flex-cell">
+                                    <span style={{ minWidth: "20px" }} /> <b>UNITY PROJECT HUB </b> &nbsp;v3.5.8 <span style={{ minWidth: "50px" }} /> 
                                     <span style={{ minWidth: "20px" }} /> Show Project Data for : <span style={{ minWidth: "5px" }} />
                                         <Dropdown
                                             ariaLabel="Basic"
@@ -646,6 +781,7 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
                                             onSelect={this.onDateFilterSelect}
                                         />
                                     </span>
+                                    
                                     <span style={{ minWidth: "20px" }} >
                                     </span>
                                 </div>
@@ -771,13 +907,39 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
                                         </div>
                                     </Card>
                                 </div>
-                                <div className="flex-column" style={{ minWidth: "500px" }}>
-                                    <Card className="flex-grow">
-                                        <div className="flex-row flex-grow flex-cell" style={{ minWidth: "500px", height: "220" }}>
-                                            <Doughnut data={reviewerPieChartData} height={220}></Doughnut>
+                         {/* Code Commits Card */}
+                         <div className="flex-column" style={{ minWidth: "350px" }}>
+                                    <Card className="flex-grow" titleProps={{ text: "Code Committers" }}>
+                                        <div className="flex-row" style={{ flexWrap: "wrap" }}>
+                                            <table>
+                                                <thead>
+                                                    <td></td>
+                                                    <td style={{ alignContent: "center", textAlign: "center", minWidth: "60px" }}>Count</td>
+                                                    <td style={{ alignContent: "center", textAlign: "center", minWidth: "100px" }}>Percent of Commits</td>
+
+                                                </thead>
+                                                <Observer selectedItem={this.codePushList}>
+                                                    {(props: { selectedItem: statKeepers.ICodePushes[] }) => {
+                                                        return (
+                                                            <>
+                                                                {props.selectedItem.map((items, index) => (
+                                                                    <tr>
+                                                                        <td className="body-m secondary-text flex-center">{items.name}</td>
+                                                                        <td className="body-m primary-text flex-center" style={{ alignContent: "center", textAlign: "center", minWidth: "60px" }}>{items.value}</td>
+                                                                        <td style={{ alignContent: "center", textAlign: "center", minWidth: "100px" }}>{(items.value / this.codePushCount * 100).toFixed(2)}%</td>
+                                                                    </tr>
+                                                                ))}
+                                                            </>
+                                                        )
+                                                    }
+                                                    }
+                                                </Observer>
+                                            </table>
                                         </div>
                                     </Card>
                                 </div>
+                                
+                                
                                 <div className="flex-column">
                                     <Card>
                                         <div className="flex-row" style={{ minWidth: 400, height: "300" }}>
@@ -820,6 +982,13 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
                                         </Card>
                                     </div>
                                 </div>
+                                <div className="flex-column" style={{ minWidth: "500px" }}>
+                                    <Card className="flex-grow">
+                                        <div className="flex-row flex-grow flex-cell" style={{ minWidth: "500px", height: "220" }}>
+                                            <Doughnut data={reviewerPieChartData} height={220}></Doughnut>
+                                        </div>
+                                    </Card>
+                                </div>
                             </div>
 
                             <div className="flex-row">
@@ -846,13 +1015,16 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
                                     </Card>
 
                                 </div>
-                                <Card>
+                                
+       
+
+                                {/* <Card>
                                     <div className="flex-row" style={{ minWidth: this.myBarChartDims.width, height: "200" }}>
                                         <>
                                             <Bar data={groupBarChartData} options={stackedChartOptions} height={200}></Bar>
                                         </>
                                     </div>
-                                </Card>
+                                </Card> */}
 
                             </div>
 
@@ -874,7 +1046,7 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
         else { //else not done loading, so show spinner
             return(                      
                 <Page className="flex-grow">                    
-                        <Header title="Unity Project Hub" titleSize={TitleSize.Large} />
+                        <Header title="Please Wait ..." titleSize={TitleSize.Large} />
                         <Card className="flex-grow flex-center bolt-table-card" contentProps={{ contentPadding: true }}>                            
                             <div className="flex-cell">
                                 <Spinner label="Loading ..." size={SpinnerSize.large} />
