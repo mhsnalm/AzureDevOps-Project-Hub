@@ -188,17 +188,21 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
             let prTableList:ITableItem[] = []
             let prTableArrayObj:ArrayItemProvider<ITableItem> = this.getTableItemProvider([]);
 
+            if (project) {
+                this.setState({ projectName: project.name });
+            }  
+
             let repositoryList:GitRepository[] = await this.retrieveRepositoriesFromADO(this.state.projectName);
             if(repositoryList)
             {
                 console.log("Project Name: " + repositoryList[0].project.name);
-                console.log("Project ID: " + repositoryList[0].project.id);
+                console.log("Project State Name: " +  this.state.projectName);
                 repositoryList.forEach((value)=>{ 
-                    if(value.project.id == repositoryList[0].project.id || value.project.name == repositoryList[0].project.name)
+                    if(value.project.name == this.state.projectName)
                         this.repoList.push({text:value.name,id:value.id}) 
                 });
             }
-            
+
             if(repository)
             {            
                 this.setState({repository:repository});
@@ -778,7 +782,7 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
                             <div className="flex-row">
                                 <div className="flex-column">
                                     <span className="flex-cell">
-                                    <span style={{ minWidth: "20px" }} /> <b>UNITY PROJECT HUB </b> &nbsp;v3.6.1 <span style={{ minWidth: "50px" }} /> 
+                                    <span style={{ minWidth: "20px" }} /> <b>UNITY PROJECT HUB </b> &nbsp;v3.6.2 <span style={{ minWidth: "50px" }} /> 
                                     <span style={{ minWidth: "20px" }} /> Show Project Data for : <span style={{ minWidth: "5px" }} />
                                         <Dropdown
                                             ariaLabel="Basic"
