@@ -189,8 +189,16 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
             let prTableArrayObj:ArrayItemProvider<ITableItem> = this.getTableItemProvider([]);
 
             let repositoryList:GitRepository[] = await this.retrieveRepositoriesFromADO(this.state.projectName);
-            repositoryList.forEach((value)=>{ this.repoList.push({text:value.name,id:value.id}) });
-
+            if(repositoryList)
+            {
+                console.log("Project Name: " + repositoryList[0].project.name);
+                console.log("Project ID: " + repositoryList[0].project.id);
+                repositoryList.forEach((value)=>{ 
+                    if(value.project.id == repositoryList[0].project.id || value.project.name == repositoryList[0].project.name)
+                        this.repoList.push({text:value.name,id:value.id}) 
+                });
+            }
+            
             if(repository)
             {            
                 this.setState({repository:repository});
@@ -433,7 +441,7 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
 
         return prList;
     }
-
+    
     public async retrieveRepositoriesFromADO(project:string): Promise<GitRepository[]>
     {
         let searchCriteria: GitPullRequestSearchCriteria = {status:PullRequestStatus.Completed, includeLinks:false, creatorId: "", reviewerId: "", repositoryId: "", sourceRefName: "",targetRefName:"", sourceRepositoryId: ""};
@@ -770,7 +778,7 @@ class RepositoryServiceHubContent extends React.Component<{}, IRepositoryService
                             <div className="flex-row">
                                 <div className="flex-column">
                                     <span className="flex-cell">
-                                    <span style={{ minWidth: "20px" }} /> <b>UNITY PROJECT HUB </b> &nbsp;v3.5.8 <span style={{ minWidth: "50px" }} /> 
+                                    <span style={{ minWidth: "20px" }} /> <b>UNITY PROJECT HUB </b> &nbsp;v3.6.1 <span style={{ minWidth: "50px" }} /> 
                                     <span style={{ minWidth: "20px" }} /> Show Project Data for : <span style={{ minWidth: "5px" }} />
                                         <Dropdown
                                             ariaLabel="Basic"
